@@ -1,30 +1,33 @@
 package jm.task.core.jdbc.util;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import jm.task.core.jdbc.model.User;
+import org.hibernate.HibernateException;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.service.ServiceRegistry;
 
 public class Util {
     // реализуйте настройку соеденения с БД
-    private static final String URL = "jdbc:mysql://localhost:3306/mysql";
-    private static final String USER = "root";
-    private static final String PASSWORD = "1234";
-    private static Connection connection;
+    private static SessionFactory sessionFactory = null;
 
-    static {
-        try {
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+    public static SessionFactory getSessionFactory() {
+        if (sessionFactory == null) {
+            try {
+                Configuration configuration = new Configuration()
+                        .setProperty("hibernate.connection.url", "jdbc:mysql://localhost:3306/my_db")
+                        .setProperty("hibernate.connection.username", "bestuser")
+                        .setProperty("hibernate.connection.password", "bestuser")
+                        .setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect")
+                        .setProperty("hibernate.show_sql", "true")
+                        .setProperty("hibernate.current_session_context_class", "thread")
+                        .addAnnotatedClass(User.class);
+                ServiceRegistry registry = new StandardServiceRegistryBuilder()
+                        .applySettings(configuration.getProperties()).build();
+                sessionFactory = configuration.buildSessionFactory(registry);
+            } catch (HibernateException e) {
+                e.printStackTrace();
+            }
         }
-
-    }
-    public static Connection getConnection() {
-        try {
-            connection.setAutoCommit(false);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return connection;
+        return sessionFactory;
     }
 }
